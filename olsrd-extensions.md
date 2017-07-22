@@ -94,3 +94,13 @@ Fisheye(又叫做朦胧视觉链路状态路由 Hazy Sighted Link State Routing)
 FIsheye 的问题在于人工引入了 TC 的洪泛边界，在理论上会引起路由不一致性以及洪泛边界的路由回环。在实践中，Fisheye 是大型网络必要的属性，效果也足够好。
 
 ## 4 NIIT(ipv4 over ipv6 traffic)
+
+towrite
+
+## 5 Smart gateways
+
+towrite
+
+## 6 NatThreshold
+
+towrite
