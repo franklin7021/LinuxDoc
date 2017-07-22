@@ -87,3 +87,10 @@ OLSRd 可以轻松拓展不同的链路质量度量。参照 src/lq_plugin*.[ch]
 
 ## 3 Fisheye
 
+通常情况下 OLSR 会将所有的 TC 消息转发给全部节点，在节点较多时这会带来很大的网络开销。减少 TC 消息的发送频率会拖延路由表的变化。
+
+Fisheye(又叫做朦胧视觉链路状态路由 Hazy Sighted Link State Routing)的机制在上述两个问题之间做了折中，每隔 7 个 TC，下一个 TC 消息会被广播到所有节点。大部分的 TC 的 TTL 值被赋予特殊值。当前 Fisheye 机制中 TTL 序列为 2, 8, 2, 16, 2, 8, 2, 255(最大的 TTL 值)。
+
+FIsheye 的问题在于人工引入了 TC 的洪泛边界，在理论上会引起路由不一致性以及洪泛边界的路由回环。在实践中，Fisheye 是大型网络必要的属性，效果也足够好。
+
+## 4 NIIT(ipv4 over ipv6 traffic)
