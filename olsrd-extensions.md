@@ -51,7 +51,7 @@ best_path(A,B) = minimum_sum({set of all paths between A and B})
 
 激活链路质量系统需要在配置文件中将变量 LinkQualityLevel 设置为 2。可以更改 LinkQualityAlgorithm 参数选择使用哪一个链路质量算法。某些嵌入式的 OLSRd 只编译了一种算法，所以这些 OLSRd 不能使用该变量。
 
-在 0.6.0 版本中有四种链路质量算法，其中两种为 Funkfeuer/Freifunk ETX 实现，另外两种为传统实现。
+在 0.6.0 版本中有四种链路质量算法，其中两种为 Funkfeuer/Freifunk ETX 实现，另外两种为传统(Legacy)实现。
 
 ### 2.3 LinkQuality-Algorithm "etx_ff"
 
@@ -70,4 +70,20 @@ Etx_ffeth 解决了该问题，为没有丢包的以太链路引入了特殊值 
 etx_ffeth 算法只用到了整数计算，所以可以在嵌入式系统。
 
 为了充分利用 etxff_eth 的优势，所有的以太网接口必须在接口配置中标记为 "mode ether" (详见 olsrd.conf.default.full)。
+
+当前 etc_ffeth 是建立新型 mesh 网络(涉及到有线)较优的选择。
+
+### 2.5 Legacy LinkQuality-Algorithm "etx_float"
+
+etx_float 根据 HELLO 计算 ETX 使用了指数衰退(指数因子可配置)。etx_float 不能使用 TC 消息计算链路质量，相较于 etx_ff 实现简单但是效果不佳。etx_float 使用浮点型数学运算，在嵌入式系统中会占用更多的 cpu 资源。etx_float 的消息格式与 etx_fpm 和 etx_ff 兼容。
+
+### 2.6 Legacy LinkQuality-Algorithm "etx_fpm"
+
+etx_fpm 是 etx_float 的定点数的实现。etx_fpm 与 etx_float 的计算过程一致，但是速度更快。etx_fpm 与 etx_fpm 的消息格式与 etx_float 和 etx_ff 兼容。
+
+### 2.7 建立自己的链路质量算法
+
+OLSRd 可以轻松拓展不同的链路质量度量。参照 src/lq_plugin*.[ch] 文件创建自己的 metric。
+
+## 3 Fisheye
 
