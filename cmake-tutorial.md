@@ -6,9 +6,9 @@
 
 Below is a step-by-step tutorial covering common build system issues that CMake helps to address. Many of these topics have been introduced in [Mastering CMake](https://www.kitware.com/what-we-offer/#books) as separate issues but seeing how they all work together in an example project can be very helpful. This tutorial can be found in the [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) directory of the CMake source code tree. Each step has its own subdirectory containing a complete copy of the tutorial for that step
 
-如下教程将一步步指引如何使用 CMake 解决通用的编译问题。其中很多问题已经在 [Mastering CMake](https://www.kitware.com/what-we-offer/#books) 作为独立部分予以讨论，但是他们如何在一个样例中协同工作是本文的重点。本教程的可以在 [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) 中找到源码，如下的每一步都对应着代码库中的一个子文件夹。
+如下教程将一步步指引如何使用 CMake 解决通用的编译问题。其中很多问题已经在 [Mastering CMake](https://www.kitware.com/what-we-offer/#books) 作为独立部分予以讨论，但是他们如何在一个样例中协同工作是本文的重点。本教程的源码可以在 [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) 中找到，如下的每一步都对应着代码库中的一个子文件夹。
 
-## Step 1 A Basic Starting Point 开始
+## Step 1 A Basic Starting Point 第一步 开始
 
 The most basic project is an executable built from source code files. For simple projects a two line CMakeLists.txt file is all that is required. This will be the starting point for our tutorial. The CMakeLists.txt file looks like:
 
@@ -69,7 +69,7 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
  
 # add the executable
-# 
+# 生成可执行文件
 add_executable(Tutorial tutorial.cxx)
 ```
 
@@ -112,5 +112,18 @@ int main (int argc, char *argv[]){
 
 The main changes are the inclusion of the TutorialConfig.h header file and printing out a version number as part of the usage message.
 
-主要的修改为包含了 TutorialConfig.h 头文件，并且在使用说明中打印了版本号。
+主要的修改为在源码中包含了 TutorialConfig.h 头文件，并且在使用说明中打印了版本号。
 
+## Step 2 Adding a Library 第二步 添加链接库
+
+Now we will add a library to our project. This library will contain our own implementation for computing the square root of a number. The executable can then use this library instead of the standard square root function provided by the compiler. For this tutorial we will put the library into a subdirectory called MathFunctions. It will have the following one line CMakeLists.txt file:
+
+现在要为项目添加链接库。该链接库包含了计算平方根的函数。可执行文件可以使用该链接库中的函数替换编译器提供的标准函数。在"第二步"中，计划将生成的链接库 MathFunctions 放入到子目录中。子目录需要有如下的 CMakeLists.txt 文件:
+
+```
+add_library(MathFunctions mysqrt.cxx)
+```
+
+The source file mysqrt.cxx has one function called mysqrt that provides similar functionality to the compiler’s sqrt function. To make use of the new library we add an add_subdirectory call in the top level CMakeLists.txt file so that the library will get built. We also add another include directory so that the MathFunctions/MathFunctions.h header file can be found for the function prototype. The last change is to add the new library to the executable. The last few lines of the top level CMakeLists.txt file now look like:
+
+子目录中的源文件 mysqrt.cxx 中有 mysqrt 函数，该函数与编译器自带的 sqrt 函数提供相同的功能。
