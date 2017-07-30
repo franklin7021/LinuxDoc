@@ -6,15 +6,15 @@
 
 Below is a step-by-step tutorial covering common build system issues that CMake helps to address. Many of these topics have been introduced in [Mastering CMake](https://www.kitware.com/what-we-offer/#books) as separate issues but seeing how they all work together in an example project can be very helpful. This tutorial can be found in the [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) directory of the CMake source code tree. Each step has its own subdirectory containing a complete copy of the tutorial for that step
 
-如下教程将一步步指引如何使用 CMake 解决通用的编译问题。其中很多问题已经在 [Mastering CMake](https://www.kitware.com/what-we-offer/#books) 作为独立部分予以讨论，但是他们如何在一个样例中协同工作是本文的重点。本教程的源码可以在 [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) 中找到，如下的每一步都对应着代码库中的一个子文件夹。
+如下教程将一步步指引如何使用 CMake 解决通用的编译链接问题。其中很多问题已经在 [Mastering CMake](https://www.kitware.com/what-we-offer/#books) 作为独立部分予以讨论，但是他们如何在一个样例中协同工作是本文的重点。本教程的源码可以在 [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) 中找到，如下的每一步都对应着代码库中的一个子文件夹。
 
 ## Step 1 A Basic Starting Point 第一步 开始
 
 The most basic project is an executable built from source code files. For simple projects a two line CMakeLists.txt file is all that is required. This will be the starting point for our tutorial. The CMakeLists.txt file looks like:
 
-最基础的项目就是使用源文件编译可执行文件。简单项目的 CMakeLists.txt 文件只需要如下几行，教程也从简单项目开始。CMakeLists.txt 如下所示:
+最基础的项目就是使用源文件编译链接生成可执行文件。简单项目的 CMakeLists.txt 文件只需要如下几行，教程也从简单项目开始。CMakeLists.txt 如下所示:
 
-```
+```cmake
 cmake_minimum_required (VERSION 2.6)
 project (Tutorial)
 add_executable(Tutorial tutorial.cxx)
@@ -47,7 +47,7 @@ The first feature we will add is to provide our executable and project with a ve
 
 第一个要添加的特性是项目版本号。当然可以在源码中添加版本号，但是在 CMakeLists.txt 中添加更具灵活性。将 CMakeLists.txt 修改如下:
 
-```
+```cmake
 cmake_minimum_required (VERSION 2.6)
 project (Tutorial)
 # The version number.
@@ -118,12 +118,126 @@ The main changes are the inclusion of the TutorialConfig.h header file and print
 
 Now we will add a library to our project. This library will contain our own implementation for computing the square root of a number. The executable can then use this library instead of the standard square root function provided by the compiler. For this tutorial we will put the library into a subdirectory called MathFunctions. It will have the following one line CMakeLists.txt file:
 
-现在要为项目添加链接库。该链接库包含了计算平方根的函数。可执行文件可以使用该链接库中的函数替换编译器提供的标准函数。在"第二步"中，计划将生成的链接库 MathFunctions 放入到子目录中。子目录需要有如下的 CMakeLists.txt 文件:
+现在要为项目添加链接库。该链接库包含了计算平方根的函数。可执行文件可以使用该链接库中的函数替换编译器提供的标准函数。在"第二步"中，计划将生成的链接库放入到子目录 MathFunctions 中。子目录需要有如下的 CMakeLists.txt 文件:
 
-```
+```cmake
 add_library(MathFunctions mysqrt.cxx)
 ```
 
 The source file mysqrt.cxx has one function called mysqrt that provides similar functionality to the compiler’s sqrt function. To make use of the new library we add an add_subdirectory call in the top level CMakeLists.txt file so that the library will get built. We also add another include directory so that the MathFunctions/MathFunctions.h header file can be found for the function prototype. The last change is to add the new library to the executable. The last few lines of the top level CMakeLists.txt file now look like:
 
-子目录中的源文件 mysqrt.cxx 中有 mysqrt 函数，该函数与编译器自带的 sqrt 函数提供相同的功能。
+子目录中的源文件 mysqrt.cxx 中有 mysqrt 函数，该函数与编译器自带的 sqrt 函数提供相同的功能。在顶层的 CMakeLists.txt 中添加 add_subdirectory，那么子目录就会得到编译；也要添加头文件目录，目的是找到 MathFunctions/MathFunctions.h 头文件中的函数原型。最后还需要想可执行文件添加链接可。顶层的 CMakeLists.txt 如下所示:
+
+```cmake
+include_directories ("${PROJECT_SOURCE_DIR}/MathFunctions")
+add_subdirectory (MathFunctions) 
+ 
+# add the executable
+# 生成可执行文件
+add_executable (Tutorial tutorial.cxx)
+target_link_libraries (Tutorial MathFunctions)
+```
+
+Now let us consider making the MathFunctions library optional. In this tutorial there really isn’t any reason to do so, but with larger libraries or libraries that rely on third party code you might want to. The first step is to add an option to the top level CMakeLists.txt file.
+
+如何让链接 MathFunctions 库变成可选项?在当前教程中看似没有必要，但是当项目使用依赖第三方代码的大型链接库时，将选用链接库变成可选项就很有必要了。首先在顶层 CMakeLists.txt 中添加如下代码:
+
+```cmake
+# should we use our own math functions?
+# 使用自己的函数?
+option (USE_MYMATH 
+        "Use tutorial provided math implementation" ON) 
+```
+
+This will show up in the CMake GUI with a default value of ON that the user can change as desired. This setting will be stored in the cache so that the user does not need to keep setting it each time they run CMake on this project. The next change is to make the build and linking of the MathFunctions library conditional. To do this we change the end of the top level CMakeLists.txt file to look like the following:
+
+在 CMake GUI 中以默认值 "on" 的形式呈现，用户可以随意更改。这个设置会保留在缓存中，不需要每次运行时重新设置。下一步就是依照条件选项编译链接 MathFunctions 库。在顶层 CMakeLists.txt 的末尾作如下改动:
+
+```cmake
+# add the MathFunctions library?
+# 是否使用 MathFunctions 库?
+if (USE_MYMATH)
+  include_directories ("${PROJECT_SOURCE_DIR}/MathFunctions")
+  add_subdirectory (MathFunctions)
+  set (EXTRA_LIBS ${EXTRA_LIBS} MathFunctions)
+endif (USE_MYMATH)
+ 
+# add the executable
+# 生成可执行文件
+add_executable (Tutorial tutorial.cxx)
+target_link_libraries (Tutorial  ${EXTRA_LIBS})
+```
+
+This uses the setting of USE_MYMATH to determine if the MathFunctions should be compiled and used. Note the use of a variable (EXTRA_LIBS in this case) to collect up any optional libraries to later be linked into the executable. This is a common approach used to keep larger projects with many optional components clean. The corresponding changes to the source code are fairly straight forward and leave us with:
+
+USE_MYMATH 决定 MathFunctions 库是否编译并且使用。变量 EXTRA_LIBS 是选择使用的链接库的集合，最后会被链接入可执行文件。使用 EXTRA_LIBS 是大型项目链接的常用方式。源代码也需要做相应的修改:
+
+```cpp
+/*
+A simple program that computes the square root of a number
+计算平方跟的程序
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "TutorialConfig.h"
+
+#ifdef USE_MYMATH
+#include "MathFunctions.h"
+#endif
+ 
+int main (int argc, char *argv[]){
+    if (argc < 2){
+        fprintf(stdout,"%s Version %d.%d\n", argv[0],
+            Tutorial_VERSION_MAJOR,
+            Tutorial_VERSION_MINOR);
+        fprintf(stdout,"Usage: %s number\n",argv[0]);
+        return 1;
+    }
+    double inputValue = atof(argv[1]);
+ 
+#ifdef USE_MYMATH
+    double outputValue = mysqrt(inputValue);
+#else
+    double outputValue = sqrt(inputValue);
+#endif
+ 
+    fprintf(stdout,"The square root of %g is %g\n",
+        inputValue, outputValue);
+    return 0;
+}
+```
+
+In the source code we make use of USE_MYMATH as well. This is provided from CMake to the source code through the TutorialConfig.h.in configured file by adding the following line to it:
+
+源代码中也使用到了 USE_MYMATH。可以通过编辑配置文件 TutorialConfig.h.in 将 USE_MYMATH 从 CMake 传递给源代码:
+
+```
+#cmakedefine USE_MYMATH
+```
+
+## Step 3 Installing and Testing 第三步 安装与测试
+
+For the next step we will add install rules and testing support to our project. The install rules are fairly straight forward. For the MathFunctions library we setup the library and the header file to be installed by adding the following two lines to MathFunctions’ CMakeLists.txt file:
+
+下一步是添加安装以及测试规则。安装规则非常直接，对于 MathFunctions 库来说，需要安装链接库和头文件。在 MathFunctions 中的 CMakeLists.txt 添加如下两行:
+
+```cmake
+install (TARGETS MathFunctions DESTINATION bin)
+install (FILES MathFunctions.h DESTINATION include)
+```
+
+For the application the following lines are added to the top level CMakeLists.txt file to install the executable and the configured header file:
+
+对于应用程序来说，需要在顶层的 CMakeLists.txt 中添加可执行文件以及头文件的安装命令:
+
+```cmake
+# add the install targets
+# 添加安装目标
+install (TARGETS Tutorial DESTINATION bin)
+install (FILES "${PROJECT_BINARY_DIR}/TutorialConfig.h"  
+         DESTINATION include)
+```
+
+That is all there is to it. At this point you should be able to build the tutorial, then type make install (or build the INSTALL target from an IDE) and it will install the appropriate header files, libraries, and executables. The CMake variable CMAKE_INSTALL_PREFIX is used to determine the root of where the files will be installed. Adding testing is also a fairly straight forward process. At the end of the top level CMakeLists.txt file we can add a number of basic tests to verify that the application is working correctly.
+
