@@ -2,6 +2,8 @@
 
 翻译自 [cmake-tutorial](https://cmake.org/cmake-tutorial/)
 
+本文采用英中对照的方式予以展示，部分翻译采用意译的方式呈现。
+
 译者 zhangmc 邮箱 zhangmc1993@qq.com
 
 Below is a step-by-step tutorial covering common build system issues that CMake helps to address. Many of these topics have been introduced in [Mastering CMake](https://www.kitware.com/what-we-offer/#books) as separate issues but seeing how they all work together in an example project can be very helpful. This tutorial can be found in the [Tests/Tutorial](https://gitlab.kitware.com/cmake/cmake/tree/master/Tests/Tutorial) directory of the CMake source code tree. Each step has its own subdirectory containing a complete copy of the tutorial for that step
@@ -241,3 +243,55 @@ install (FILES "${PROJECT_BINARY_DIR}/TutorialConfig.h"
 
 That is all there is to it. At this point you should be able to build the tutorial, then type make install (or build the INSTALL target from an IDE) and it will install the appropriate header files, libraries, and executables. The CMake variable CMAKE_INSTALL_PREFIX is used to determine the root of where the files will be installed. Adding testing is also a fairly straight forward process. At the end of the top level CMakeLists.txt file we can add a number of basic tests to verify that the application is working correctly.
 
+安装部分就全部介绍完了。使用 `make install` 命令(或使用 IDE 的安装功能)安装头文件、链接库和可执行文件。CMake 中的变量 CMAKE_INSTALL_PREFIX 用来决定安装路径。添加测试也非常简明。在顶层 CMakeLists.txt 的末尾添加基础测试，以验证应用可以正常工作。
+
+```cmake
+include(CTest)
+
+# does the application run
+# 应用能否使用
+add_test (TutorialRuns Tutorial 25)
+
+# does it sqrt of 25
+# 测试计算25的平方根
+add_test (TutorialComp25 Tutorial 25)
+set_tests_properties (TutorialComp25 PROPERTIES PASS_REGULAR_EXPRESSION "25 is 5")
+
+# does it handle negative numbers
+# 处理负数
+add_test (TutorialNegative Tutorial -25)
+set_tests_properties (TutorialNegative PROPERTIES PASS_REGULAR_EXPRESSION "-25 is 0")
+
+# does it handle small numbers
+# 数值较小时的测试
+add_test (TutorialSmall Tutorial 0.0001)
+set_tests_properties (TutorialSmall PROPERTIES PASS_REGULAR_EXPRESSION "0.0001 is 0.01")
+
+# does the usage message work?
+# 使用说明测试
+add_test (TutorialUsage Tutorial)
+set_tests_properties (TutorialUsage PROPERTIES PASS_REGULAR_EXPRESSION "Usage:.*number")
+```
+
+After building one may run the “ctest” command line tool to run the tests. The first test simply verifies that the application runs, does not segfault or otherwise crash, and has a zero return value. This is the basic form of a CTest test. The next few tests all make use of the PASS_REGULAR_EXPRESSION test property to verify that the output of the test contains certain strings. In this case verifying that the computed square root is what it should be and that the usage message is printed when an incorrect number of arguments are provided. If you wanted to add a lot of tests to test different input values you might consider creating a macro like the following:
+
+在编译连接后，使用命令行工具 `ctest` 运行测试。第一项测试是最为基础的形式，检验程序能否执行，是否有段错误或者是否有其他原因导致的程序崩溃，返回值为0。后续几个测试使用 PASS_REGULAR_EXPRESSION 属性验证输出是否包含特定字符；这就可以验证计算结果是否正确，使用说明是否正确打印。如需要添加很多测试，可以创建如下宏:
+
+```cmake
+# define a macro to simplify adding tests, then use it
+macro (do_test arg result)
+# 定义宏简化测试
+  add_test (TutorialComp${arg} Tutorial ${arg})
+  set_tests_properties (TutorialComp${arg}
+    PROPERTIES PASS_REGULAR_EXPRESSION ${result})
+endmacro (do_test)
+ 
+# do a bunch of result based tests
+# 运行测试验证结果
+do_test (25 "25 is 5")
+do_test (-25 "-25 is 0")
+```
+
+For each invocation of do_test, another test is added to the project with a name, input, and results based on the passed arguments.
+
+每次调用 do_test，后续的测试就会被添加，参数为输入以及期待的结果。
