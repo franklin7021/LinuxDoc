@@ -295,3 +295,44 @@ do_test (-25 "-25 is 0")
 For each invocation of do_test, another test is added to the project with a name, input, and results based on the passed arguments.
 
 每次调用 do_test，后续的测试就会被添加，参数为输入以及期待的结果。
+
+## Step 4 Adding System Introspection 第四步 添加系统自检
+
+Next let us consider adding some code to our project that depends on features the target platform may not have. For this example we will add some code that depends on whether or not the target platform has the log and exp functions. Of course almost every platform has these functions but for this tutorial assume that they are less common. If the platform has log then we will use that to compute the square root in the mysqrt function. We first test for the availability of these functions using the CheckFunctionExists.cmake macro in the top level CMakeLists.txt file as follows:
+
+如果目标平台没有某种特性，那么就需要在项目代码中做出相应的修改。比如，如果目标平台没有 log 和 exp 函数，那么就需要在代码添加相关功能。当然几乎所有的平台支持这些函数，但是在教程中假设他们缺少这些函数。如果当前平台有 log 和 exp 函数，那么就将其应用在平方根的计算之中。在顶层 CMakeLists.txt 中使用 CheckFunctionExists.cmake 宏检测系统中是否提供这些函数:
+
+```cmake
+# does this system provide the log and exp functions?
+# 系统是否提供 log 和 exp 函数
+include (CheckFunctionExists)
+check_function_exists (log HAVE_LOG)
+check_function_exists (exp HAVE_EXP)
+```
+
+Next we modify the TutorialConfig.h.in to define those values if CMake found them on the platform as follows:
+
+接下来修改 TutorialConfig.h.in 文件。如果 CMake 在系统中找到了对应的函数，就在 TutorialConfig.h 中添加这些宏定义:
+
+```
+// does the platform provide exp and log functions?
+// 平台是否提供 log 和 exp 函数
+#cmakedefine HAVE_LOG
+#cmakedefine HAVE_EXP
+```
+
+It is important that the tests for log and exp are done before the configure_file command for TutorialConfig.h. The configure_file command immediately configures the file using the current settings in CMake. Finally in the mysqrt function we can provide an alternate implementation based on log and exp if they are available on the system using the following code:
+
+CMakeLists.txt 中的 configure_file 命令使用当前设置配置 TutorialConfig.h 文件，所以 check_function_exists 应该写在 configure_file 之前。最后在 mysqrt 函数中添加如下代码，基于 log 和 exp 函数提供计算平方根的功能。
+
+```cpp
+// if we have both log and exp then use them
+// 如果系统提供 log 和 exp 函数，使用他们计算平方根
+#if defined (HAVE_LOG) && defined (HAVE_EXP)
+    result = exp(log(x)*0.5);
+
+// otherwise use an iterative approach
+// 不提供则使用其他替代方式
+#else 
+    . . .
+```
