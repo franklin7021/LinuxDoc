@@ -1,5 +1,7 @@
 # olsr-nl80211
 
+译者 zhangmc 邮箱 zhangmc1993@qq.com
+
 ## 概要
 
 本文档描述了利用 linux nl80211 收集无线链路信息实现 OLSRd 的链路质量拓展。

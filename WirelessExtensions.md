@@ -1,8 +1,6 @@
 # Wireless Extensions
 
-译者 ZhangMC
-
-Email zhangmingchong@bupt.edu.cn
+译者 zhangmc 邮箱 zhangmc1993@qq.com
 
 翻译自 [Wireless Extensions for Linux](https://hewlettpackard.github.io/wireless-tools/Linux.Wireless.Extensions.html)
 

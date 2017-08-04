@@ -1,5 +1,7 @@
 # OLSRd 协议拓展
 
+译者 zhangmc 邮箱 zhangmc1993@qq.com
+
 该说明基于 0.6.0 版本
 
 > - 1.Credits
